@@ -81,10 +81,11 @@ Telegram 的渐进式回复流目前仅适用于私聊，群聊不会收到回�
 平台接入说明应使用平台自己的控制台术语，并链接官方文档。此表只说明 Maka
 Runtime 消费什么值，不代表这些凭据已经通过线上平台验证。
 
-当前 Bot 的 HTTP 请求使用 `proxiedFetch()` 解析出的全局活动网络代理。当前 Telegram
-和 Discord bridge 都不会读取 channel 级别的 `proxyUrl`，因此不要依赖该字段完成网络
-转发。包括 Discord Gateway 在内的长连接 WebSocket 传输，仍可能需要 TUN 这样的系统级
-路由。
+当前 Bot 的 HTTP 请求尚未接入 Maka 的全局网络代理。不要将全局代理设置或 channel 级别的
+`proxyUrl` 视为 Bot 流量一定会走代理的保证：当前 Telegram 和 Discord bridge 不会读取
+`proxyUrl`，Slack 则直接使用其 SDK 传输。若平台访问需要网络转发，应为 HTTP 与长连接
+WebSocket 一并配置并独立验证 TUN 等系统级路由。待专门的 Bot 代理能力实现并验证后，
+再更新此说明。
 
 这张矩阵的源码依据包括 [`BotProvider` 与
 `BOT_DELIVERY_PROVIDERS`](../packages/core/src/bot-chat-settings.ts) 契约、共享的
@@ -103,8 +104,8 @@ secret 写入本文档。
 
 1. 使用 [BotFather](https://core.telegram.org/bots#how-do-i-create-a-bot) 的
    `/newbot` 创建 Bot，复制 token。
-2. 将 token 填入 Maka 的 `token`。如需代理网络，请配置 Maka 的全局活动网络代理；当前
-   bridge 不会读取 channel 级别的 `proxyUrl`。
+2. 将 token 填入 Maka 的 `token`。如需网络转发，请配置并验证 TUN 等系统级路由；当前
+   Maka 全局代理设置和 channel 级别的 `proxyUrl` 都不能保证该 bridge 会走代理。
 3. 先向 Bot 发送一条私聊文本消息。测试群聊时，将 Bot 加入测试群，并注意
    Telegram 的群隐私和提及规则。
 
@@ -123,9 +124,9 @@ Telegram 是当前唯一同时实现原生渐进式回复、输入中提示和�
 
 Maka 使用 Discord Gateway 接收事件，并使用 REST 调用发送回复；普通 Bot 消息不走
    Discord HTTP interactions endpoint。
-如果 Discord 访问需要代理，请为 HTTP 请求配置 Maka 的全局活动网络代理。当前 Telegram
-和 Discord bridge 都不会读取 channel 级别的 `proxyUrl`；Gateway WebSocket 仍需要系统级
-路由（例如 TUN），并且需要重启 Maka。
+如果 Discord 访问需要网络转发，请为 HTTP 请求和 Gateway WebSocket 一并配置并验证 TUN
+等系统级路由，然后重启 Maka。当前 Maka 全局代理设置和 channel 级别的 `proxyUrl` 都不能
+保证该 bridge 会走代理。
 
 ### Slack
 
@@ -135,9 +136,9 @@ Maka 使用 Discord Gateway 接收事件，并使用 REST 调用发送回复；�
 3. 将 Bot token 填入 Maka 的 `token`，将 app-level token 填入 `appSecret`，并为
    workspace 测试订阅所需的消息事件。
 
-Slack 使用 WebSocket 接收事件，使用 Web API client 回复。Slack 的 HTTP API 请求会使用
-Maka 的全局活动网络代理，但 Socket Mode WebSocket 仍可能需要 TUN 这样的系统级路由。
-验证权限和消息事件订阅时，应使用私有开发 workspace。
+Slack 使用 WebSocket 接收事件，使用 Web API client 回复。如需网络转发，请为 Web API
+和 Socket Mode WebSocket 一并配置并验证 TUN 等系统级路由；当前 Bot 接入不能保证 Maka
+的全局代理设置会生效。验证权限和消息事件订阅时，应使用私有开发 workspace。
 
 ### 钉钉
 

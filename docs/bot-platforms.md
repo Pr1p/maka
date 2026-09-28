@@ -90,11 +90,14 @@ link to its official documentation. This table only describes what the Maka
 Runtime consumes; it is not a claim that the credentials have been validated
 against a live provider.
 
-Bot HTTP requests currently use the active global network proxy resolved by
-`proxiedFetch()`. The channel-level `proxyUrl` setting is not consumed by the
-current Telegram or Discord bridges, so do not rely on it for routing. Long-
-lived WebSocket transports, including Discord Gateway, may still require a
-system-level route such as TUN.
+Bot HTTP requests are not currently wired to Maka's global network proxy. Do
+not treat either the global proxy setting or the channel-level `proxyUrl`
+setting as a Bot routing guarantee; the current Telegram and Discord bridges
+do not consume `proxyUrl`, and Slack uses its SDK transport directly. When
+provider access requires routing, use and independently verify a system-level
+route such as TUN for both HTTP and long-lived WebSocket traffic. This guidance
+should be revisited after dedicated Bot proxy support is implemented and
+validated.
 
 The source of truth for this matrix is the [`BotProvider` and
 `BOT_DELIVERY_PROVIDERS`](../packages/core/src/bot-chat-settings.ts) contract,
@@ -115,9 +118,10 @@ the current portal sequence. Never put the resulting secrets in this document.
 
 1. Use [BotFather](https://core.telegram.org/bots#how-do-i-create-a-bot) to
    create a bot with `/newbot` and copy its token.
-2. Put the token in Maka's `token` field. For network routing, configure Maka's
-   active global network proxy; the channel-level `proxyUrl` field is not
-   currently consumed by this bridge.
+2. Put the token in Maka's `token` field. If provider access requires routing,
+   use and verify a system-level route such as TUN. Neither Maka's global proxy
+   setting nor the channel-level `proxyUrl` field currently guarantees routing
+   for this bridge.
 3. Send the bot a direct text message first. For a group smoke test, add the
    bot to a test group and account for Telegram group privacy and mention rules.
 
@@ -137,10 +141,10 @@ optional delivery enhancements; a normal text reply remains the baseline.
 
 Maka uses Discord's Gateway for inbound events and REST calls for sends. It
 does not use Discord's HTTP interactions endpoint for ordinary bot messages.
-When Discord access requires a proxy, configure Maka's active global network
-proxy for HTTP requests. The channel-level `proxyUrl` field is not consumed by
-the current Telegram or Discord bridges; the Gateway WebSocket still requires
-a system-level route such as TUN, followed by an app restart.
+When Discord access requires routing, use and verify a system-level route such
+as TUN for both HTTP requests and the Gateway WebSocket, then restart Maka.
+Neither Maka's global proxy setting nor the channel-level `proxyUrl` field
+currently guarantees routing for this bridge.
 
 ### Slack
 
@@ -154,9 +158,10 @@ a system-level route such as TUN, followed by an app restart.
 
 Slack uses a WebSocket connection for events and a Web API client for replies.
 Keep the app in a private development workspace while validating scopes and
-message-event permissions. Slack's HTTP API requests use Maka's active global
-network proxy, while the Socket Mode WebSocket may still require a system-level
-route such as TUN.
+message-event permissions. If Slack access requires routing, use and verify a
+system-level route such as TUN for both the Web API and Socket Mode WebSocket;
+the current Bot integration does not guarantee that Maka's global proxy setting
+will be applied.
 
 ### DingTalk
 
